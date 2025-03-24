@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能问答系统</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        .logo {
+            width: 40px;
+            height: 40px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .history-container {
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+            overflow-y: auto;
+            max-height: calc(100vh - 140px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .history-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 122, 255, 0.1);
+        }
+        .history-item:hover {
+            background: rgba(0, 122, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        .history-item.active {
+            background: rgba(0, 122, 255, 0.3);
+        }
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+            margin-bottom: 12px;
+            height: calc(100vh - 240px);
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-message {
+            background: linear-gradient(135deg, #007AFF, #00C6FF);
+            color: white;
+            margin-left: auto;
+            position: relative;
+        }
+        .user-message:hover {
+            transform: translateY(-1px);
+        }
+        .bot-message {
+            background: linear-gradient(135deg, #E9ECEF, #F8F9FA);
+            color: #212529;
+            position: relative;
+        }
+        .bot-message:hover {
+            transform: translateY(-1px);
+        }
+        .qa-type-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .qa-type-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: rgba(0, 122, 255, 0.1);
+            color: #007AFF;
+        }
+        .qa-type-button.active {
+            background: #007AFF;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+        }
+        .qa-type-button:hover {
+            transform: translateY(-1px);
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #questionInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(0, 122, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        #questionInput:focus {
+            outline: none;
+            border-color: #007AFF;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.1);
+        }
+        #sendButton {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #007AFF, #00C6FF);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+        }
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
+            background: linear-gradient(135deg, #0056b3, #0096FF);
+        }
+        #sendButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin: 15px 0;
+            font-size: 14px;
+            animation: pulse 1.5s ease infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3L15 6H9L12 3Z" fill="#2c3e50">
+                <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M12 3L15 6H9L12 3Z;M12 2.5L15.5 5.5H8.5L12 2.5Z;M12 3L15 6H9L12 3Z"/>
+            </path>
+            <path d="M7 7H17V17C17 18.1046 16.1046 19 15 19H9C7.89543 19 7 18.1046 7 17V7Z" fill="#2c3e50"/>
+            <rect x="9" y="10" width="2" height="2" rx="1" fill="#007AFF">
+                <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="1;0.5;1"/>
+            </rect>
+            <rect x="13" y="10" width="2" height="2" rx="1" fill="#007AFF">
+                <animate attributeName="opacity" dur="3s" repeatCount="indefinite" values="1;0.5;1" begin="0.5s"/>
+            </rect>
+            <path d="M10 14H14V15H10V14Z" fill="#007AFF">
+                <animate attributeName="d" dur="2s" repeatCount="indefinite" values="M10 14H14V15H10V14Z;M11 14.5H13V15H11V14.5Z;M10 14H14V15H10V14Z"/>
+            </path>
+        </svg>
+        <h1 class="title">智能问答系统</h1>
+    </div>
+    <div class="main-container">
+        <div class="history-container" id="historyContainer"></div>
+        <div class="chat-section">
+            <div class="chat-container" id="chatContainer"></div>
+            <div class="loading" id="loading">正在思考中...</div>
+            <div class="qa-type-container">
+                <button class="qa-type-button active" data-type="chat">聊天</button>
+                <button class="qa-type-button" data-type="image">文生图</button>
+            </div>
+            <div class="input-container">
+                <input type="text" id="questionInput" placeholder="请输入您的问题..." autocomplete="off">
+                <button id="sendButton">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const historyContainer = document.getElementById('historyContainer');
+        const questionInput = document.getElementById('questionInput');
+        const sendButton = document.getElementById('sendButton');
+        const loading = document.getElementById('loading');
+        const qaTypeButtons = document.querySelectorAll('.qa-type-button');
+        
+        let currentQAType = 'chat';
+
+        let chatHistory = [];
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            if (currentQAType === 'image' && !isUser) {
+                const img = document.createElement('img');
+                img.src = content;
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '8px';
+                messageDiv.textContent = '';
+                messageDiv.appendChild(img);
+            } else {
+                messageDiv.textContent = content;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // 添加到历史记录
+            if (isUser) {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.textContent = text;
+                historyItem.onclick = () => showHistoryChat(chatHistory.length);
+                historyContainer.appendChild(historyItem);
+                chatHistory.push({ question: text, answer: null });
+            } else {
+                chatHistory[chatHistory.length - 1].answer = text;
+            }
+        }
+
+        function showHistoryChat(index) {
+            const history = chatHistory[index];
+            if (!history) return;
+
+            // 清空当前聊天内容
+            chatContainer.innerHTML = '';
+
+            // 显示历史对话
+            addMessage(history.question, true);
+            if (history.answer) {
+                addMessage(history.answer, false);
+            }
+
+            // 更新历史记录项的激活状态
+            const historyItems = historyContainer.getElementsByClassName('history-item');
+            Array.from(historyItems).forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+        }
+
+        // 设置问答类型按钮点击事件
+        qaTypeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                qaTypeButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentQAType = button.dataset.type;
+                questionInput.placeholder = currentQAType === 'chat' ? '请输入您的问题...' : '请描述您想要生成的图片...';
+            });
+        });
+
+        async function sendQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            questionInput.value = '';
+            sendButton.disabled = true;
+            loading.style.display = 'block';
+            addMessage(question, true);
+
+            try {
+                const endpoint = currentQAType === 'chat' ? '/api/qa/ask' : '/api/qa/image';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: question
+                });
+
+                if (!response.ok) {
+                    throw new Error('请求失败');
+                }
+
+                const answer = await response.text();
+                addMessage(answer, false);
+            } catch (error) {
+                addMessage('抱歉，发生了错误，请稍后重试。', false);
+                console.error('Error:', error);
+            } finally {
+                sendButton.disabled = false;
+                loading.style.display = 'none';
+                questionInput.focus();
+            }
+        }
+
+        sendButton.addEventListener('click', sendQuestion);
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
